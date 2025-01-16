@@ -6,7 +6,7 @@ import {
   PluginSettingTab,
   Setting,
 } from "obsidian";
-import OpenAI from "openai";
+import { OpenAI } from "openai";
 
 // Remember to rename these classes and interfaces!
 
@@ -29,7 +29,14 @@ function getCurrentText(editor: Editor): string {
   return editor.getValue();
 }
 
-async function getAnswer(apiKey: string): Promise<string> {
+function calcMessages(text: string): OpenAI.Chat.ChatCompletionMessageParam[] {
+  return [{ role: "user", content: text }];
+}
+
+async function getAnswer(
+  apiKey: string,
+  messages: OpenAI.Chat.ChatCompletionMessageParam[]
+): Promise<string> {
   const openai = new OpenAI({
     apiKey,
     dangerouslyAllowBrowser: true,
@@ -38,9 +45,7 @@ async function getAnswer(apiKey: string): Promise<string> {
   const response = await openai.chat.completions.create({
     //model: "chatgpt-4o-latest",
     model: "gpt-4-turbo",
-    messages: [
-      { role: "user", content: "pythonでフィボナッチ家数の計算コード書いて" },
-    ],
+    messages,
   });
   return response.choices[0].message.content ?? "";
 }
@@ -59,8 +64,9 @@ export default class MyPlugin extends Plugin {
         {
           const editor = getCurrentEditor();
           const currentText = getCurrentText(editor);
-          const answer = await getAnswer(this.settings.apiKey);
-          editor.setValue(`${currentText}\n${answer}`);
+          const messages = calcMessages(currentText);
+          const answer = await getAnswer(this.settings.apiKey, messages);
+          editor.setValue(`${currentText}\n\n# 回答\n${answer}`);
         }
       }
     );
