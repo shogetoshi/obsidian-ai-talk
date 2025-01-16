@@ -8,19 +8,14 @@ import {
 } from "obsidian";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: "sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  dangerouslyAllowBrowser: true,
-});
-
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
-  mySetting: string;
+  apiKey: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-  mySetting: "default",
+  apiKey: "sk-XXXX",
 };
 
 function getCurrentEditor(): Editor {
@@ -34,7 +29,12 @@ function getCurrentText(editor: Editor): string {
   return editor.getValue();
 }
 
-async function getAnswer(): Promise<string> {
+async function getAnswer(apiKey: string): Promise<string> {
+  const openai = new OpenAI({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+
   const response = await openai.chat.completions.create({
     //model: "chatgpt-4o-latest",
     model: "gpt-4-turbo",
@@ -55,11 +55,11 @@ export default class MyPlugin extends Plugin {
     const ribbonIconEl = this.addRibbonIcon(
       "dice",
       "Sample Plugin",
-      async (evt: MouseEvent) => {
+      async () => {
         {
           const editor = getCurrentEditor();
           const currentText = getCurrentText(editor);
-          const answer = await getAnswer();
+          const answer = await getAnswer(this.settings.apiKey);
           editor.setValue(`${currentText}\n${answer}`);
         }
       }
@@ -95,17 +95,15 @@ class SampleSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    new Setting(containerEl)
-      .setName("Setting #1")
-      .setDesc("It's a secret")
-      .addText((text) =>
-        text
-          .setPlaceholder("Enter your secret")
-          .setValue(this.plugin.settings.mySetting)
-          .onChange(async (value) => {
-            this.plugin.settings.mySetting = value;
-            await this.plugin.saveSettings();
-          })
-      );
+    new Setting(containerEl).setName("OpenAI API Key").addText((text) => {
+      text.inputEl.setAttribute("type", "password");
+      return text
+        .setPlaceholder("sk-XXXX")
+        .setValue(this.plugin.settings.apiKey)
+        .onChange(async (value) => {
+          this.plugin.settings.apiKey = value;
+          await this.plugin.saveSettings();
+        });
+    });
   }
 }
