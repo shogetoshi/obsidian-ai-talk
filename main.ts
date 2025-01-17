@@ -7,6 +7,7 @@ import {
   Setting,
 } from "obsidian";
 import { OpenAI } from "openai";
+import { getWrittenMessages } from "./utils";
 
 // Remember to rename these classes and interfaces!
 
@@ -29,11 +30,7 @@ function getCurrentText(editor: Editor): string {
   return editor.getValue();
 }
 
-function getWrittenMessages(text: string): string[] {
-  return ["ハロー"];
-}
-
-function getMessages(
+export function getMessages(
   texts: string[]
 ): OpenAI.Chat.ChatCompletionMessageParam[] {
   return [
@@ -44,7 +41,7 @@ function getMessages(
   ];
 }
 
-function getFormattedText(writtenMessages: string[]): string {
+export function getFormattedText(writtenMessages: string[]): string {
   return "# Q\nハロー\n\n---";
 }
 
