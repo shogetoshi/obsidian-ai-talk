@@ -15,7 +15,7 @@ interface MyPluginSettings {
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-  apiKey: "sk-XXXX",
+  apiKey: "",
 };
 
 function getCurrentEditor(): Editor {
@@ -29,8 +29,23 @@ function getCurrentText(editor: Editor): string {
   return editor.getValue();
 }
 
-function calcMessages(text: string): OpenAI.Chat.ChatCompletionMessageParam[] {
-  return [{ role: "user", content: text }];
+function getWrittenMessages(text: string): string[] {
+  return ["ハロー"];
+}
+
+function getMessages(
+  texts: string[]
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  return [
+    {
+      role: "user",
+      content: "ハロー",
+    },
+  ];
+}
+
+function getFormattedText(writtenMessages: string[]): string {
+  return "# Q\nハロー\n\n---";
 }
 
 async function askForAI(
@@ -67,10 +82,22 @@ export default class MyPlugin extends Plugin {
       "Sample Plugin",
       async () => {
         {
+          // 今のページのハンドラを取得
           const editor = getCurrentEditor();
-          const currentText = getCurrentText(editor);
-          const messages = calcMessages(currentText);
+          const originalText = getCurrentText(editor);
+
+          // 今のページを解析して順番に保持しておく
+          const writtenMessages = getWrittenMessages(originalText);
+
+          // ChatGPT用のmessageを作る
+          const messages = getMessages(writtenMessages);
+
+          // ChatGPTに投げる
           await askForAI(this.settings.apiKey, messages, (chunk: string) => {
+            // 最初の文章がきたらフォーマットされたテキストに置き換える
+            if (getCurrentText(editor) === originalText) {
+              editor.setValue(`${getFormattedText(writtenMessages)}\n# A\n`);
+            }
             editor.setValue(`${getCurrentText(editor)}${chunk}`);
           });
         }
