@@ -33,21 +33,26 @@ function calcMessages(text: string): OpenAI.Chat.ChatCompletionMessageParam[] {
   return [{ role: "user", content: text }];
 }
 
-async function getAnswer(
+async function askForAI(
   apiKey: string,
-  messages: OpenAI.Chat.ChatCompletionMessageParam[]
-): Promise<string> {
+  messages: OpenAI.Chat.ChatCompletionMessageParam[],
+  callback: (chunk: string) => void
+): Promise<void> {
   const openai = new OpenAI({
     apiKey,
     dangerouslyAllowBrowser: true,
   });
 
-  const response = await openai.chat.completions.create({
-    //model: "chatgpt-4o-latest",
-    model: "gpt-4-turbo",
+  const stream = await openai.chat.completions.create({
+    model: "chatgpt-4o-latest",
     messages,
+    stream: true,
   });
-  return response.choices[0].message.content ?? "";
+
+  for await (const chunk of stream) {
+    const content = chunk.choices[0]?.delta?.content || "";
+    if (content) callback(content);
+  }
 }
 
 export default class MyPlugin extends Plugin {
@@ -65,8 +70,9 @@ export default class MyPlugin extends Plugin {
           const editor = getCurrentEditor();
           const currentText = getCurrentText(editor);
           const messages = calcMessages(currentText);
-          const answer = await getAnswer(this.settings.apiKey, messages);
-          editor.setValue(`${currentText}\n\n# 回答\n${answer}`);
+          await askForAI(this.settings.apiKey, messages, (chunk: string) => {
+            editor.setValue(`${getCurrentText(editor)}${chunk}`);
+          });
         }
       }
     );
