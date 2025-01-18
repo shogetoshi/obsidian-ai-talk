@@ -5,6 +5,7 @@ import {
   Plugin,
   PluginSettingTab,
   Setting,
+  Notice,
 } from "obsidian";
 import { OpenAI } from "openai";
 import {
@@ -35,6 +36,10 @@ function getCurrentText(editor: Editor): string {
   return editor.getValue();
 }
 
+function formatBuffer(buffer: string): string {
+  return buffer.replace(/\n---\n/g, "");
+}
+
 async function askForAI(
   apiKey: string,
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
@@ -60,8 +65,8 @@ async function askForAI(
   for await (const chunk of stream) {
     buffer += chunk.choices[0]?.delta?.content || "";
     i++;
-    if (!currentFreq || i >= currentFreq) {
-      await callback(buffer);
+    if (currentFreq && i >= currentFreq) {
+      callback(formatBuffer(buffer));
       buffer = "";
       i = 0;
       currentFreq = freqGen.next().value;
@@ -69,7 +74,7 @@ async function askForAI(
   }
 
   if (buffer) {
-    await callback(buffer);
+    callback(formatBuffer(buffer));
   }
 }
 
@@ -79,12 +84,12 @@ export default class MyPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // This creates an icon in the left ribbon.
-    const ribbonIconEl = this.addRibbonIcon(
-      "dice",
-      "Sample Plugin",
-      async () => {
+    this.addCommand({
+      id: "task-with-ai",
+      name: "Talk with AI",
+      callback: async () => {
         {
+          new Notice(`Talk with AI: Start`);
           // 今のページのハンドラを取得
           const editor = getCurrentEditor();
           const originalText = getCurrentText(editor);
@@ -103,18 +108,23 @@ export default class MyPlugin extends Plugin {
               // 最初の文章がきたらフォーマットされたテキストに置き換える
               if (getCurrentText(editor) === originalText) {
                 editor.setValue(
-                  `${getFormattedText(writtenMessages)}\n\n---\n---\n# A\n`
+                  `${getFormattedText(writtenMessages)}\n\n---\n# A\n`
                 );
               }
-              editor.setValue(`${getCurrentText(editor)}${chunk}`);
+              editor.replaceRange(chunk, {
+                line: editor.lastLine() + 1,
+                ch: 0,
+              });
             }
           );
-          editor.setValue(`${getCurrentText(editor)}\n\n---\n---\n# Q\n`);
+          editor.replaceRange("\n\n---\n# Q\n", {
+            line: editor.lastLine() + 1,
+            ch: 0,
+          });
         }
-      }
-    );
-    // Perform additional things with the ribbon
-    ribbonIconEl.addClass("my-plugin-ribbon-class");
+        new Notice(`Talk with AI: Finish`);
+      },
+    });
 
     // This adds a settings tab so the user can configure various aspects of the plugin
     this.addSettingTab(new SampleSettingTab(this.app, this));

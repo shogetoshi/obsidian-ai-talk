@@ -17,25 +17,26 @@ export function isValidConversation(text: string): boolean {
   return true;
 }
 
+function formatMessage(message: string): string {
+  if (message.startsWith("#### ")) message = message.slice(5);
+  return message.trim();
+}
+
 export function getTexts(text: string): string[] {
   const messages = [];
   let message = "";
   const lines = text.split("\n");
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
-    if (
-      line.match(/^---$/) &&
-      lines[i + 1].match(/^---$/) &&
-      lines[i + 2].match(/# [QA]$/)
-    ) {
-      messages.push(message.trim());
+    if (line.match(/^---$/) && lines[i + 1].match(/# [QA]$/)) {
+      messages.push(formatMessage(message));
       message = "";
-      i = i + 2;
+      i++;
       continue;
     }
     message += line + "\n";
   }
-  messages.push(message.trim());
+  messages.push(formatMessage(message));
   return messages;
 }
 
@@ -60,7 +61,7 @@ export function getMessages(
 
 export function getFormattedText(writtenMessages: string[]): string {
   const comments = writtenMessages.map((text, i) => {
-    return `${i % 2 === 0 ? "# Q" : "# A"}\n${text}`;
+    return `${i % 2 === 0 ? "# Q\n#### " : "# A\n"}${text}`;
   });
-  return comments.join("\n\n---\n---\n");
+  return comments.join("\n\n---\n");
 }

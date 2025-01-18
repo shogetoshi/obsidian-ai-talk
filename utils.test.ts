@@ -7,25 +7,24 @@ import {
 
 test("testIsSimpleQuestion", () => {
   expect(isSimpleQuestion("  hello  ")).toStrictEqual(true);
-  expect(isSimpleQuestion("# Q\n  hello  ")).toStrictEqual(false);
+  expect(isSimpleQuestion("# Q\n####  hello  ")).toStrictEqual(false);
 });
 
 test("testIsValidConversation", () => {
   //expect(isValidConversation("  hello  ")).toStrictEqual(false);
-  expect(isValidConversation("# Q\n  hello  ")).toStrictEqual(true);
+  expect(isValidConversation("# Q\n####  hello  ")).toStrictEqual(true);
 });
 
 test("testGetTexts", () => {
   expect(
     getTexts(`# Q
-  hello  `)
+####    hello  `)
   ).toStrictEqual([`hello`]);
   expect(
     getTexts(
       `# Q
-hello
+#### hello
 
----
 ---
 # A
 hi
@@ -33,9 +32,8 @@ hi
 how are you?
 
 ---
----
 # Q
-i'm fine
+#### i'm fine
 `
     )
   ).toStrictEqual([
@@ -48,9 +46,8 @@ how are you?`,
   expect(
     getTexts(
       `# Q
-hello
+#### hello
 
----
 ---
 # A
 hi
@@ -58,9 +55,8 @@ hi
 how are you?
 
 ---
----
 # Q
-i'm fine
+#### i'm fine
 `
     )
   ).toStrictEqual([
@@ -73,66 +69,56 @@ how are you?`,
   expect(
     getTexts(
       `# Q
-a
+#### a
 
----
 ---
 # A
 b
 
 ---
----
 # Q
-c
+#### c
 
----
 ---
 # A
 d
 
 ---
----
 # Q
-e`
+#### e`
     )
   ).toStrictEqual([`a`, `b`, `c`, `d`, `e`]);
 });
 
 test("testGetFormattedText", () => {
   expect(getFormattedText(["a"])).toStrictEqual(`# Q
-a`);
+#### a`);
   expect(getFormattedText(["a", "b", "c"])).toStrictEqual(`# Q
-a
+#### a
 
----
 ---
 # A
 b
 
 ---
----
 # Q
-c`);
+#### c`);
   expect(getFormattedText(["a", "b", "c", "d", "e"])).toStrictEqual(`# Q
-a
+#### a
 
----
 ---
 # A
 b
 
 ---
----
 # Q
-c
+#### c
 
----
 ---
 # A
 d
 
 ---
----
 # Q
-e`);
+#### e`);
 });
