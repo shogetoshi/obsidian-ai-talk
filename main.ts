@@ -7,7 +7,7 @@ import {
   Setting,
 } from "obsidian";
 import { OpenAI } from "openai";
-import { getWrittenMessages } from "./utils";
+import { getConversationTexts, getMessages, getFormattedText } from "./utils";
 
 // Remember to rename these classes and interfaces!
 
@@ -30,25 +30,10 @@ function getCurrentText(editor: Editor): string {
   return editor.getValue();
 }
 
-export function getMessages(
-  texts: string[]
-): OpenAI.Chat.ChatCompletionMessageParam[] {
-  return [
-    {
-      role: "user",
-      content: "ハロー",
-    },
-  ];
-}
-
-export function getFormattedText(writtenMessages: string[]): string {
-  return "# Q\nハロー\n\n---";
-}
-
 async function askForAI(
   apiKey: string,
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  callback: (chunk: string) => void
+  callback: (chunk: string) => Promise<void>
 ): Promise<void> {
   const openai = new OpenAI({
     apiKey,
@@ -63,7 +48,7 @@ async function askForAI(
 
   for await (const chunk of stream) {
     const content = chunk.choices[0]?.delta?.content || "";
-    if (content) callback(content);
+    if (content) await callback(content);
   }
 }
 
@@ -84,19 +69,26 @@ export default class MyPlugin extends Plugin {
           const originalText = getCurrentText(editor);
 
           // 今のページを解析して順番に保持しておく
-          const writtenMessages = getWrittenMessages(originalText);
+          const writtenMessages = getConversationTexts(originalText);
 
           // ChatGPT用のmessageを作る
           const messages = getMessages(writtenMessages);
 
           // ChatGPTに投げる
-          await askForAI(this.settings.apiKey, messages, (chunk: string) => {
-            // 最初の文章がきたらフォーマットされたテキストに置き換える
-            if (getCurrentText(editor) === originalText) {
-              editor.setValue(`${getFormattedText(writtenMessages)}\n# A\n`);
+          await askForAI(
+            this.settings.apiKey,
+            messages,
+            async (chunk: string): Promise<void> => {
+              // 最初の文章がきたらフォーマットされたテキストに置き換える
+              if (getCurrentText(editor) === originalText) {
+                editor.setValue(
+                  `${getFormattedText(writtenMessages)}\n\n---\n---\n# A\n`
+                );
+              }
+              editor.setValue(`${getCurrentText(editor)}${chunk}`);
             }
-            editor.setValue(`${getCurrentText(editor)}${chunk}`);
-          });
+          );
+          editor.setValue(`${getCurrentText(editor)}\n\n---\n---\n# Q\n`);
         }
       }
     );
