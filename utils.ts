@@ -1,5 +1,11 @@
 import { OpenAI } from "openai";
 
+export function* gen<T>(array: T[]): Generator<T> {
+  for (const item of array) {
+    yield item;
+  }
+}
+
 export function isSimpleQuestion(text: string): boolean {
   for (const line of text.trim().split("\n")) {
     if (line.match(/^# \w/)) return false;

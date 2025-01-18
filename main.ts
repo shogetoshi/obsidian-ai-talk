@@ -7,7 +7,12 @@ import {
   Setting,
 } from "obsidian";
 import { OpenAI } from "openai";
-import { getConversationTexts, getMessages, getFormattedText } from "./utils";
+import {
+  gen,
+  getConversationTexts,
+  getMessages,
+  getFormattedText,
+} from "./utils";
 
 // Remember to rename these classes and interfaces!
 
@@ -46,9 +51,25 @@ async function askForAI(
     stream: true,
   });
 
+  const freqGen = gen([
+    1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1597, 2584,
+  ]);
+  let buffer = "";
+  let i = 0;
+  let currentFreq = freqGen.next().value;
   for await (const chunk of stream) {
-    const content = chunk.choices[0]?.delta?.content || "";
-    if (content) await callback(content);
+    buffer += chunk.choices[0]?.delta?.content || "";
+    i++;
+    if (!currentFreq || i >= currentFreq) {
+      await callback(buffer);
+      buffer = "";
+      i = 0;
+      currentFreq = freqGen.next().value;
+    }
+  }
+
+  if (buffer) {
+    await callback(buffer);
   }
 }
 
