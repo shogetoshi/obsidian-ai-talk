@@ -51,7 +51,7 @@ async function askForAI(
   });
 
   const stream = await openai.chat.completions.create({
-    model: "chatgpt-4o-latest",
+    model: "o1-mini",
     messages,
     stream: true,
   });
