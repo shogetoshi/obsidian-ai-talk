@@ -36,7 +36,7 @@ export function getTexts(text: string): string[] {
     }
     message += line + "\n";
   }
-  messages.push(formatMessage(message));
+  if (message.trim().length > 0) messages.push(formatMessage(message));
   return messages;
 }
 

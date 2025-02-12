@@ -88,6 +88,18 @@ d
 #### e`
     )
   ).toStrictEqual([`a`, `b`, `c`, `d`, `e`]);
+  expect(
+    getTexts(`# Q
+#### hello
+
+---
+# A
+hello
+
+---
+# Q
+`)
+  ).toStrictEqual([`hello`, `hello`]);
 });
 
 test("testGetFormattedText", () => {

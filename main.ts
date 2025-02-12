@@ -88,15 +88,14 @@ export default class MyPlugin extends Plugin {
       id: "task-with-ai",
       name: "Talk with AI",
       callback: async () => {
-        {
+        // 今のページのハンドラを取得
+        const editor = getCurrentEditor();
+        const originalText = getCurrentText(editor);
+
+        // 今のページを解析して順番に保持しておく
+        const writtenMessages = getConversationTexts(originalText);
+        if (writtenMessages.length % 2 === 1) {
           new Notice(`Talk with AI: Start`);
-          // 今のページのハンドラを取得
-          const editor = getCurrentEditor();
-          const originalText = getCurrentText(editor);
-
-          // 今のページを解析して順番に保持しておく
-          const writtenMessages = getConversationTexts(originalText);
-
           // ChatGPT用のmessageを作る
           const messages = getMessages(writtenMessages);
 
@@ -121,8 +120,8 @@ export default class MyPlugin extends Plugin {
             line: editor.lastLine() + 1,
             ch: 0,
           });
+          new Notice(`Talk with AI: Finish`);
         }
-        new Notice(`Talk with AI: Finish`);
       },
     });
 
