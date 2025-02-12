@@ -125,6 +125,30 @@ export default class MyPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: "delete-last-answer",
+      name: "Delete last answer",
+      callback: async () => {
+        // 今のページのハンドラを取得
+        const editor = getCurrentEditor();
+        const originalText = getCurrentText(editor);
+
+        // 今のページを解析して順番に保持しておく
+        const writtenMessages = getConversationTexts(originalText);
+
+        if (writtenMessages.length >= 2) {
+          if (writtenMessages.length % 2 === 0) {
+            writtenMessages.pop();
+          } else {
+            writtenMessages.pop();
+            writtenMessages.pop();
+          }
+          editor.setValue(getFormattedText(writtenMessages));
+          new Notice(`Talk with AI: The last answer was deleted.`);
+        }
+      },
+    });
+
     // This adds a settings tab so the user can configure various aspects of the plugin
     this.addSettingTab(new SampleSettingTab(this.app, this));
   }
