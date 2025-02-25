@@ -11,6 +11,7 @@ import { OpenAI } from "openai";
 import {
   gen,
   getConversationTexts,
+  getSystemPrompt,
   getMessages,
   getFormattedText,
 } from "./utils";
@@ -19,10 +20,12 @@ import {
 
 interface MyPluginSettings {
   apiKey: string;
+  systemPrompt: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
   apiKey: "",
+  systemPrompt: "",
 };
 
 function getCurrentEditor(): Editor {
@@ -97,7 +100,10 @@ export default class MyPlugin extends Plugin {
         if (writtenMessages.length % 2 === 1) {
           new Notice(`Talk with AI: Start`);
           // ChatGPT用のmessageを作る
-          const messages = getMessages(writtenMessages);
+          const messages = [
+            getSystemPrompt(this.settings.systemPrompt),
+            ...getMessages(writtenMessages),
+          ];
 
           // ChatGPTに投げる
           await askForAI(
@@ -184,6 +190,17 @@ class SampleSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.apiKey)
         .onChange(async (value) => {
           this.plugin.settings.apiKey = value;
+          await this.plugin.saveSettings();
+        });
+    });
+    new Setting(containerEl).setName("SystemPrompt").addTextArea((text) => {
+      text.inputEl.style.width = "400px";
+      text.inputEl.style.height = "400px";
+      return text
+        .setPlaceholder("")
+        .setValue(this.plugin.settings.systemPrompt)
+        .onChange(async (value) => {
+          this.plugin.settings.systemPrompt = value;
           await this.plugin.saveSettings();
         });
     });
