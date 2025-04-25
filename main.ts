@@ -54,7 +54,7 @@ async function askForAI(
   });
 
   const stream = await openai.chat.completions.create({
-    model: "o1-mini",
+    model: "o4-mini",
     messages,
     stream: true,
   });
