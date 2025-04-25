@@ -20,11 +20,13 @@ import {
 
 interface MyPluginSettings {
   apiKey: string;
+  model: string;
   systemPrompt: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
   apiKey: "",
+  model: "chatgpt-4o-latest",
   systemPrompt: "",
 };
 
@@ -45,8 +47,9 @@ function formatBuffer(buffer: string): string {
 
 async function askForAI(
   apiKey: string,
+  model: string,
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  callback: (chunk: string) => Promise<void>
+  callback: (chunk: string) => Promise<void>,
 ): Promise<void> {
   const openai = new OpenAI({
     apiKey,
@@ -54,7 +57,7 @@ async function askForAI(
   });
 
   const stream = await openai.chat.completions.create({
-    model: "o4-mini",
+    model: model,
     messages,
     stream: true,
   });
@@ -108,19 +111,20 @@ export default class MyPlugin extends Plugin {
           // ChatGPTに投げる
           await askForAI(
             this.settings.apiKey,
+            this.settings.model,
             messages,
             async (chunk: string): Promise<void> => {
               // 最初の文章がきたらフォーマットされたテキストに置き換える
               if (getCurrentText(editor) === originalText) {
                 editor.setValue(
-                  `${getFormattedText(writtenMessages)}\n\n---\n# A\n`
+                  `${getFormattedText(writtenMessages)}\n\n---\n# A\n`,
                 );
               }
               editor.replaceRange(chunk, {
                 line: editor.lastLine() + 1,
                 ch: 0,
               });
-            }
+            },
           );
           editor.replaceRange("\n\n---\n# Q\n", {
             line: editor.lastLine() + 1,
@@ -192,6 +196,21 @@ class SampleSettingTab extends PluginSettingTab {
           this.plugin.settings.apiKey = value;
           await this.plugin.saveSettings();
         });
+    });
+    new Setting(containerEl).setName("OpenAI Model").addDropdown((drop) => {
+      drop
+        .addOption("o4-mini", "o4-mini （数学やコーディング重視）")
+        .addOption("gpt-4.1-2025-04-14", "gpt-4.1 （フラッグシップモデル）")
+        .addOption("o3", "o3 （全体的に強い）")
+        .addOption(
+          "chatgpt-4o-latest",
+          "chatgpt-4o （ChatGPTで使われているもの）",
+        );
+      drop.setValue(this.plugin.settings.model);
+      drop.onChange(async (value) => {
+        this.plugin.settings.model = value;
+        await this.plugin.saveSettings();
+      });
     });
     new Setting(containerEl).setName("SystemPrompt").addTextArea((text) => {
       text.inputEl.style.width = "400px";
