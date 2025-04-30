@@ -84,6 +84,14 @@ async function askForAI(
   }
 }
 
+async function getModelOptions(
+  manifestDir: string,
+): Promise<Record<string, string>> {
+  const path = `${manifestDir}/modelOptions.json`;
+  const text = await this.app.vault.adapter.read(path);
+  return JSON.parse(text);
+}
+
 export default class MyPlugin extends Plugin {
   settings: MyPluginSettings;
 
@@ -197,21 +205,16 @@ class SampleSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         });
     });
-    new Setting(containerEl).setName("OpenAI Model").addDropdown((drop) => {
-      drop
-        .addOption("o4-mini", "o4-mini （数学やコーディング重視）")
-        .addOption("gpt-4.1-2025-04-14", "gpt-4.1 （フラッグシップモデル）")
-        .addOption("o3", "o3 （全体的に強い）")
-        .addOption(
-          "chatgpt-4o-latest",
-          "chatgpt-4o （ChatGPTで使われているもの）",
-        );
-      drop.setValue(this.plugin.settings.model);
-      drop.onChange(async (value) => {
-        this.plugin.settings.model = value;
-        await this.plugin.saveSettings();
+    new Setting(containerEl)
+      .setName("OpenAI Model")
+      .addDropdown(async (drop) => {
+        drop.addOptions(await getModelOptions(this.plugin.manifest.dir!));
+        drop.setValue(this.plugin.settings.model);
+        drop.onChange(async (value) => {
+          this.plugin.settings.model = value;
+          await this.plugin.saveSettings();
+        });
       });
-    });
     new Setting(containerEl).setName("SystemPrompt").addTextArea((text) => {
       text.inputEl.style.width = "400px";
       text.inputEl.style.height = "400px";
