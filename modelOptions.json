@@ -1,6 +1,5 @@
 {
-  "o4-mini": "o4-mini （数学やコーディング重視）",
-  "gpt-4.1-2025-04-14": "gpt-4.1 （フラッグシップモデル）",
-  "o3": "o3 （全体的に強い）",
-  "chatgpt-4o-latest": "chatgpt-4o （ChatGPTで使われているもの）"
+  "gpt-5-chat-latest": "gpt-5-chat-latest （ChatGPTモデル）",
+  "gpt-5": "gpt-5 （深い論理的思考）",
+  "gpt-5-mini": "gpt-5-mini （論理的思考のmini）"
 }
