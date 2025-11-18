@@ -1,5 +1,6 @@
 {
+  "gpt-5.1": "gpt-5.1 ",
   "gpt-5-chat-latest": "gpt-5-chat-latest （ChatGPTモデル）",
-  "gpt-5": "gpt-5 （深い論理的思考）",
-  "gpt-5-mini": "gpt-5-mini （論理的思考のmini）"
+  "gpt-5-mini": "gpt-5-mini （論理的思考のmini）",
+  "gpt-5": "gpt-5"
 }
